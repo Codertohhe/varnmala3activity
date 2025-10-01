@@ -238,8 +238,13 @@ document.addEventListener('touchstart', maybeStartFromGlobal, { passive: true, c
 canvas.addEventListener('click', (e) => {
     if (showGameScreen && !gameRunning && window.smallButtonCoords) {
         const rect = canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+        // Map client coordinates to canvas internal coordinates to handle CSS scaling
+        const clientX = e.clientX - rect.left;
+        const clientY = e.clientY - rect.top;
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const x = clientX * scaleX;
+        const y = clientY * scaleY;
         
         // Check if click is within the small button area
         if (x >= window.smallButtonCoords.x && 
