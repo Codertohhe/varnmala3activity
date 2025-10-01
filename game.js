@@ -912,14 +912,18 @@ function drawGame() {
             ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Center the play button on the canvas
+            // Ensure button is attached to <body> so it is not inside the scaled container
+            if (playButton.parentElement !== document.body) {
+                document.body.appendChild(playButton);
+            }
+            // Center the play button relative to viewport; keep it clickable on all devices
             playButton.style.display = 'block';
-            // Use fixed so the button is not affected by container scaling
             playButton.style.position = 'fixed';
             playButton.style.left = '50%';
             playButton.style.top = '50%';
             playButton.style.transform = 'translate(-50%, -50%)';
-            playButton.style.zIndex = '100';
+            playButton.style.zIndex = '10000';
+            playButton.style.pointerEvents = 'auto';
             playButton.style.padding = '25px 50px';
             playButton.style.fontSize = '28px';
             playButton.style.fontWeight = 'bold';
