@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20">
+  <!-- Wooden Slate -->
+  <rect x="0" y="0" width="100" height="20" fill="#8B4513" stroke="#000" stroke-width="1"/>
+  
+  <!-- Wood Grain Lines -->
+  <line x1="10" y1="0" x2="10" y2="20" stroke="#6B3E26" stroke-width="1" opacity="0.5"/>
+  <line x1="30" y1="0" x2="30" y2="20" stroke="#6B3E26" stroke-width="1" opacity="0.5"/>
+  <line x1="50" y1="0" x2="50" y2="20" stroke="#6B3E26" stroke-width="1" opacity="0.5"/>
+  <line x1="70" y1="0" x2="70" y2="20" stroke="#6B3E26" stroke-width="1" opacity="0.5"/>
+  <line x1="90" y1="0" x2="90" y2="20" stroke="#6B3E26" stroke-width="1" opacity="0.5"/>
+</svg>

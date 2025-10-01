@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hindi Letter Learning Game</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <h1>वर्णमाला - 3 (Varnamala - 3)</h1>
+            <p class="instructions">इन पैराशूट पर अक्षर लिखे हुए हैं। ध्यान से सुनिए और कीजीटल की सहायता से सही पैराशूट के नीचे लकड़ी का तख्ता लगाइए। देखें तो सही कितने अंक बना पाते हैं आप! प्ले बटन पर क्लिक कीजिए।</p>
+        </div>
+        
+        <div class="game-area">
+            <canvas id="gameCanvas" width="800" height="500"></canvas>
+            
+            <div id="gameOverBox" class="game-over-box" style="display:none;">
+                <div class="game-over-content">
+                    <div class="game-over-message">ओह! एक और बार कोशिश कीजिए</div>
+                    <button id="gameOverOkButton">ठीक है।</button>
+                </div>
+            </div>
+            <div class="controls">
+                <button id="playButton">Play</button>
+            </div>
+            <div class="movement-arrows">
+                <img id="leftArrow" src="images/left arrow.png" alt="Left Arrow" />
+                <img id="rightArrow" src="images/right arrow.png" alt="Right Arrow" />
+            </div>
+            <div class="chances-bar">
+                <img class="chance-slate" data-index="0" src="images/woodenslate.png" alt="Chance 1" />
+                <img class="chance-slate" data-index="1" src="images/woodenslate.png" alt="Chance 2" />
+                <img class="chance-slate" data-index="2" src="images/woodenslate.png" alt="Chance 3" />
+                <img class="chance-slate" data-index="3" src="images/woodenslate.png" alt="Chance 4" />
+            </div>
+            <img id="octopusScoreDisplay" src="images/octopusimg.png" alt="Octopus" />
+            <span id="octopusChances"></span>
+        </div>
+    </div>
+
+    <audio id="correctSound" src="sounds/right.mp3"></audio>
+    <audio id="wrongSound" src="sounds/wrong.mp3"></audio>
+    <audio id="headingSound" src="sounds/heading.mp3"></audio>
+    
+    <script src="game.js"></script>
+</body>
+</html>

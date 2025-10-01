@@ -1,0 +1,259 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    overflow: hidden;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+
+    margin: 0;
+    padding: 20px;
+    min-height: 100vh;
+}
+
+.game-container {
+    max-width: 900px;
+    width: 100%;
+    overflow: hidden;
+    margin: 0 auto;
+    padding: 0 12px;
+}
+
+.header {
+    /* background-color: #3498db; */
+    color: rgb(37, 124, 168);
+    padding: 20px;
+    text-align: center;
+    border-radius: 15px 15px 0 0;
+}
+
+.header h1 {
+    display: inline-block;  /* shrink background to text */
+    margin-bottom: 10px;
+    font-size: 25px;
+    background-color: rgb(47, 143, 192);
+    color: white;
+    border-radius: 20px;
+    padding: 5px 15px; /* add some space around text */
+}
+
+
+.instructions {
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.game-area {
+    padding: 30px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 500px;
+}
+
+#gameCanvas {
+    display: block;
+    margin: 0 auto;
+    background-color: transparent;
+    /* border: 8px solid #D2B48C; */
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    /* Background image removed */
+    width: 100%;
+    height: auto;
+}
+
+.controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 15px;
+}
+
+#playButton {
+    background-color: #27ae60;
+    color: white;
+    border: none;
+    padding: 10px 25px;
+    font-size: 18px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#playButton:hover {
+    background-color: #219653;
+}
+
+.movement-arrows {
+    position: absolute;
+       left: 52%;
+    bottom: 51px;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    z-index: 10;
+}
+.movement-arrows img {
+width: 87px;
+    height: 50px;
+    cursor: pointer;
+    transition: transform 0.2s;
+    margin: 0;
+    padding: 0;
+    border: none;
+    box-shadow: none;
+}
+.movement-arrows img:active {
+    transform: scale(0.9);
+}
+
+#octopusScoreDisplay {
+    position: absolute;
+    right: 78%;
+    bottom: 120px;
+    width: 125px;
+    height: 110px;
+    z-index: 10;
+    user-select: none;
+    pointer-events: none;
+}
+
+#octopusChances {
+    position: absolute;
+    left: 147px;
+    bottom: 170px;
+    font-size: 30px;
+    font-weight: bold;
+    color: white;
+    text-shadow: 2px 2px 6px rgba(0,0,0,0.7);
+    z-index: 20;
+    pointer-events: none;
+    user-select: none;
+}
+
+.chances-bar {
+    position: absolute;
+   left: 87px;
+    bottom: 61px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 6px 8px; /* row-gap col-gap */
+    z-index: 15;
+}
+.chances-row {
+    display: contents;
+}
+.chance-slate {
+    width: 50px;
+    height: 20px;
+    user-select: none;
+    pointer-events: none;
+}
+
+/* Offset rows: first row a bit left, second row a bit right */
+.chance-slate[data-index="0"],
+.chance-slate[data-index="1"] {
+    transform: translateX(-8px);
+}
+.chance-slate[data-index="2"],
+.chance-slate[data-index="3"] {
+    transform: translateX(8px);
+}
+
+.game-over-box {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: transparent;
+    background-image: url('images/gameovermessagebox.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+    border: none;
+    border-radius: 0;
+    
+    z-index: 200;
+    padding: 0;
+    width: 460px;
+    height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.game-over-content {
+    position: absolute;
+    top: 56%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 58%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+.game-over-message {
+    font-size: 1.1rem;
+    color: #7c1f03;
+    margin-bottom: 24px;
+    font-weight: bold;
+    text-align: center;
+    line-height: 1.35;
+    word-break: break-word;
+    overflow: hidden;
+}
+#gameOverOkButton {
+    background: #ff9800;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    padding: 10px 28px;
+    cursor: pointer;
+    font-weight: bold;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    transition: background 0.2s;
+}
+#gameOverOkButton:hover {
+    background: #e65100;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+    .header h1 { font-size: 24px; }
+    .instructions { font-size: 15px; }
+    .movement-arrows img { width: 72px; height: 42px; }
+    #octopusScoreDisplay { width: 110px; height: 95px; right: 80%; bottom: 110px; }
+    #octopusChances { left: 130px; bottom: 158px; font-size: 26px; }
+}
+
+@media (max-width: 768px) {
+    .game-container { padding: 0 8px; }
+    .game-area { padding: 18px; }
+    .movement-arrows { bottom: 40px; }
+    .movement-arrows img { width: 62px; height: 36px; }
+    .chances-bar { left: 70px; bottom: 50px; gap: 4px; }
+    #octopusScoreDisplay { width: 96px; height: 82px; right: 81%; bottom: 98px; }
+    #octopusChances { left: 112px; bottom: 142px; font-size: 22px; }
+    .game-over-box { width: min(440px, 80vw); height: auto; aspect-ratio: 46/30; }
+    .game-over-content { width: 62%; }
+}
+
+@media (max-width: 576px) {
+    .header h1 { font-size: 20px; }
+    .instructions { font-size: 14px; }
+    .movement-arrows { bottom: 32px; }
+    .movement-arrows img { width: 54px; height: 32px; }
+    .chances-bar { left: 56px; bottom: 42px; }
+    #octopusScoreDisplay { width: 84px; height: 72px; right: 82%; bottom: 88px; }
+    #octopusChances { left: 98px; bottom: 128px; font-size: 20px; }
+}
