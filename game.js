@@ -156,6 +156,8 @@ let hideBodiesDuringReset = false;
 let restartScheduled = false;
 // Control whether the game auto-restarts after a wrong collection
 const AUTO_RESTART_ON_WRONG = false;
+// Track if game over UI is visible to control Start button visibility
+let gameOverVisible = false;
 
 // Update octopus chances display and wooden slates
 function updateOctopusChances() {
@@ -681,11 +683,9 @@ function updateGame() {
 
                     // Check if we've collected the maximum number of characters
                     if (collectedCharacters.length >= MAX_CHARACTERS) {
-                        // Update score to show multiples of 4 (4, 8, 12, etc.)
+                        // Award points and consume one chance as per rule
                         score += 4;
                         console.log('4 letters collected! Score updated to:', score);
-
-                        // Instead of congratulating, decrement a chance and reset collectedCharacters
                         misses = Math.min(MAX_MISSES, misses + 1);
                         updateOctopusChances();
                         collectedCharacters = [];
@@ -928,7 +928,7 @@ function drawGame() {
 
     // Draw instructions if game is not running
     if (!gameRunning) {
-        if (!showGameScreen) {
+        if (!showGameScreen && !gameOverVisible) {
             // Initial state - show play button overlay
             // Draw a semi-transparent overlay for the play button area
             ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
@@ -1068,7 +1068,7 @@ function drawTurtleOnBorder() {
             scoreSpan = document.createElement('span');
             scoreSpan.className = 'turtle-score';
             scoreSpan.style.position = 'absolute';
-            scoreSpan.style.left = '35px'; // Move further right
+            scoreSpan.style.left = '30px'; // Move further right
             scoreSpan.style.top = '38px';  // Move further up
             scoreSpan.style.fontSize = '30px';
             scoreSpan.style.fontWeight = 'bold';
@@ -1543,10 +1543,16 @@ drawGame();
 function showGameOverBox() {
     const box = document.getElementById('gameOverBox');
     if (box) box.style.display = 'flex';
+    gameOverVisible = true;
+    // Ensure the big Start button is hidden on game over
+    if (playButton) {
+        playButton.style.display = 'none';
+    }
 }
 function hideGameOverBox() {
     const box = document.getElementById('gameOverBox');
     if (box) box.style.display = 'none';
+    gameOverVisible = false;
 }
 
 // Reset heading sound state when the page is shown (useful for back/forward navigation)
