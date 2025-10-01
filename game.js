@@ -216,6 +216,23 @@ const keys = {
 
 // Event listeners
 playButton.addEventListener('click', startGame);
+// Extra robust start handlers for devices that miss the button click
+playButton.addEventListener('touchstart', (e) => { e.preventDefault(); startGame(); }, { passive: false });
+playButton.addEventListener('pointerdown', (e) => { startGame(); });
+
+// Fallback: if the big Play button is visible, start game when user taps within its visual bounds
+function maybeStartFromGlobal(e) {
+    if (gameRunning || showGameScreen) return;
+    if (!playButton || getComputedStyle(playButton).display === 'none') return;
+    const rect = playButton.getBoundingClientRect();
+    const x = (e.touches && e.touches[0] ? e.touches[0].clientX : e.clientX);
+    const y = (e.touches && e.touches[0] ? e.touches[0].clientY : e.clientY);
+    if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+        startGame();
+    }
+}
+document.addEventListener('click', maybeStartFromGlobal, { capture: true });
+document.addEventListener('touchstart', maybeStartFromGlobal, { passive: true, capture: true });
 
 // Add canvas click event listener for the small start button
 canvas.addEventListener('click', (e) => {
