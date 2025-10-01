@@ -5,15 +5,16 @@
 }
 
 html, body {
-    /* Keep the entire experience on a single screen without scrollbars */
+    /* Keep the experience on one desktop screen without scrollbars */
     overflow: hidden;
+    height: 100%;
 }
 
 body {
     font-family: 'Arial', sans-serif;
 
     margin: 0;
-    /* padding: 20px; */
+    padding: 20px;
     min-height: 100vh;
 }
 
@@ -23,6 +24,18 @@ body {
     overflow: hidden;
     margin: 0 auto;
     padding: 0 12px;
+    /* Scale the whole game to fit any desktop viewport without changing design */
+    transform-origin: top center;
+}
+
+/* Base design size and auto-scale factor */
+:root {
+    --base-game-width: 900px;  /* matches .game-container max-width */
+    --base-game-height: 740px; /* approximate total designed height incl. header/paddings */
+}
+
+.game-container {
+    transform: scale(calc(min(100vw / var(--base-game-width), 100vh / var(--base-game-height))));
 }
 
 .header {
@@ -69,8 +82,6 @@ body {
     /* Background image removed */
     width: 100%;
     height: auto;
-    /* Scale down to always fit into the viewport height */
-    max-height: calc(100vh - 260px);
 }
 
 .controls {

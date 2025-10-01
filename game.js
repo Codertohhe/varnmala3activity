@@ -914,7 +914,8 @@ function drawGame() {
 
             // Center the play button on the canvas
             playButton.style.display = 'block';
-            playButton.style.position = 'absolute';
+            // Use fixed so the button is not affected by container scaling
+            playButton.style.position = 'fixed';
             playButton.style.left = '50%';
             playButton.style.top = '50%';
             playButton.style.transform = 'translate(-50%, -50%)';
