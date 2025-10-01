@@ -20,10 +20,16 @@ let targetDisplay = {
 let parachutesSpawned = 0;
 let maxParachutesAtOnce = 3;
 let canSpawnNewParachutes = true;
+// Track whether the target letter was collected in the current batch of 3
+let batchTargetCollected = false;
 
-// Tune how close a parachute must get to the slate before counting as a hit
-// This reduces the visual gap caused by image padding
-const PARACHUTE_TOUCH_OFFSET_PX = 35;
+// Collision tuning: require real overlap with the slate (no early hits)
+// Minimum pixels the parachute's bottom must overlap into the slate area
+const PARACHUTE_TOUCH_OFFSET_PX = 0; // keep for compatibility (no early subtraction)
+const MIN_VERTICAL_OVERLAP_PX = 8;
+// Require the parachute's center to be above the slate (avoid side hits)
+const REQUIRE_CENTER_OVER_SLATE = true;
+const SLATE_EDGE_MARGIN_PX = 6; // how far from slate edges the center must be
 
 // Characters collected on the slate
 let collectedCharacters = [];
@@ -315,6 +321,18 @@ function playHeadingSound() {
     }
 }
 
+// Stop and reset the heading sound if it is playing
+function stopHeadingSound() {
+    try {
+        if (headingSound) {
+            headingSound.pause();
+            headingSound.currentTime = 0;
+        }
+    } catch (e) {
+        console.log('Could not stop heading sound:', e);
+    }
+}
+
 // Setup click/touch handler to play heading sound on first user interaction
 function setupClickToPlayAnywhere() {
     if (headingSoundPlayed || gameRunning || !headingSound) return;
@@ -355,6 +373,8 @@ function setupClickToPlayAnywhere() {
 
 // Game functions
 function startGame() {
+    // Always stop heading sound on any Play/Restart click
+    stopHeadingSound();
     if (!gameRunning && !showGameScreen) {
         // First click on Play button - play heading sound and show game screen
         playHeadingSound();
@@ -379,6 +399,8 @@ function startGame() {
 function actuallyStartGame() {
     // Stop any existing sounds
     stopRepeatingSound();
+    // Ensure the heading sound is silenced when gameplay begins
+    stopHeadingSound();
 
     gameRunning = true;
     showGameScreen = false;
@@ -389,6 +411,7 @@ function actuallyStartGame() {
     misses = 0; // Reset misses to 0
     parachutesSpawned = 0; // Reset parachute count
     canSpawnNewParachutes = true; // Allow spawning new parachutes
+    batchTargetCollected = false; // Reset batch state
     splashAnimations = []; // Reset splash animations
     wrongLetterAnimations = []; // Reset wrong letter animations
     rocks = []; // Reset rocks
@@ -500,6 +523,8 @@ function createLetter() {
     // Create three different letters for the batch
     let letterObj;
     if (parachutesSpawned === 0) {
+        // Starting a new batch of three parachutes
+        batchTargetCollected = false;
         // First parachute - random letter
         const randomIndex1 = Math.floor(Math.random() * hindiLetters.length);
         letterObj = hindiLetters[randomIndex1];
@@ -595,8 +620,15 @@ function updateGame() {
         if (!letter.collected) {
             letter.y += letter.speed;
 
-            // Check for collision with slate (use offset to reduce visual gap)
-            if (letter.y + letter.height - PARACHUTE_TOUCH_OFFSET_PX > slate.y &&
+            // Check for collision with slate – require a small positive vertical overlap
+            // and the parachute's horizontal center to be above the slate area
+            const centerX = letter.x + letter.width / 2;
+            const centerOverSlate = !REQUIRE_CENTER_OVER_SLATE ||
+                (centerX >= slate.x + SLATE_EDGE_MARGIN_PX &&
+                 centerX <= slate.x + slate.width - SLATE_EDGE_MARGIN_PX);
+
+            if (centerOverSlate &&
+                letter.y + letter.height >= slate.y + MIN_VERTICAL_OVERLAP_PX &&
                 letter.y < slate.y + slate.height &&
                 letter.x + letter.width > slate.x &&
                 letter.x < slate.x + slate.width) {
@@ -604,6 +636,8 @@ function updateGame() {
                 letter.collected = true;
 
                 if (letter.isTarget) {
+                    // Mark that the target for this batch has been collected
+                    batchTargetCollected = true;
                     // Stop the repeating sound when correct letter is collected
                     stopRepeatingSound();
 
@@ -703,6 +737,20 @@ function updateGame() {
         parachutesSpawned = 0;
         canSpawnNewParachutes = true;
         console.log('All parachutes dropped, spawning new batch of 3');
+
+        // If player did not collect the target parachute during this batch,
+        // count it as a miss
+        if (!batchTargetCollected) {
+            misses = Math.min(MAX_MISSES, misses + 1);
+            updateOctopusChances();
+            if (misses >= MAX_MISSES) {
+                showGameOverBox();
+                gameRunning = false;
+                return;
+            }
+        }
+        // Prepare for the next batch
+        batchTargetCollected = false;
     }
 
     // Spawn new parachutes only if we can and haven't reached the limit

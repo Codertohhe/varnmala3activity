@@ -5,7 +5,9 @@
 }
 
 html, body {
-    overflow: hidden;
+    /* Allow vertical scrolling on small screens to avoid clipped content */
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
 body {
