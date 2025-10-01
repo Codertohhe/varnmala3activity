@@ -390,17 +390,17 @@ function setupClickToPlayAnywhere() {
 
 // Game functions
 function startGame() {
-    // Always stop heading sound on any Play/Restart click
-    stopHeadingSound();
+    // Two-step flow:
+    // 1) First click on big Start Game -> play heading sound, show small Play in canvas
+    // 2) Click on small Play -> stop heading sound, start gameplay
     if (!gameRunning && !showGameScreen) {
-        // First click on Play button - play heading sound and show game screen
         playHeadingSound();
         showGameScreen = true;
         playButton.textContent = 'Restart';
-        console.log('Heading sound played, showing game screen with small button');
-        drawGame(); // Redraw to show the game screen
+        drawGame();
     } else if (showGameScreen && !gameRunning) {
-        // Click on the small start button - actually start the game
+        // Starting actual gameplay from the small Play button
+        stopHeadingSound();
         actuallyStartGame();
     } else if (gameRunning) {
         // Restart the game - but prevent infinite loop
