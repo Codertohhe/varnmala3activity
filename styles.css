@@ -5,16 +5,15 @@
 }
 
 html, body {
-    /* Allow vertical scrolling on small screens to avoid clipped content */
-    overflow-x: hidden;
-    overflow-y: auto;
+    /* Keep the entire experience on a single screen without scrollbars */
+    overflow: hidden;
 }
 
 body {
     font-family: 'Arial', sans-serif;
 
     margin: 0;
-    padding: 20px;
+    /* padding: 20px; */
     min-height: 100vh;
 }
 
@@ -70,6 +69,8 @@ body {
     /* Background image removed */
     width: 100%;
     height: auto;
+    /* Scale down to always fit into the viewport height */
+    max-height: calc(100vh - 260px);
 }
 
 .controls {
