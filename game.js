@@ -8,7 +8,9 @@ const wrongSound = document.getElementById('wrongSound');
 // Game settings
 let gameRunning = false;
 let showGameScreen = false; // New state for showing game screen with small button
+let congratsVisible = false; // Track whether congrats UI is visible
 let score = 0;
+let anyWrongCollected = false; // Track if any wrong letter was collected in the current run
 let currentTargetLetter;
 let letters = [];
 let targetDisplay = {
@@ -22,6 +24,12 @@ let maxParachutesAtOnce = 3;
 let canSpawnNewParachutes = true;
 // Track whether the target letter was collected in the current batch of 3
 let batchTargetCollected = false;
+// Track whether the target parachute was missed (hit water or disappeared) in this batch
+let targetMissedThisBatch = false;
+// Track number of batches missed (all three balloons missed)
+let batchMisses = 0;
+// Track if a wrong letter was collected during the current batch
+let wrongCollectedThisBatch = false;
 
 // Collision tuning: require real overlap with the slate (no early hits)
 // Minimum pixels the parachute's bottom must overlap into the slate area
@@ -30,6 +38,10 @@ const MIN_VERTICAL_OVERLAP_PX = 8;
 // Require the parachute's center to be above the slate (avoid side hits)
 const REQUIRE_CENTER_OVER_SLATE = true;
 const SLATE_EDGE_MARGIN_PX = 6; // how far from slate edges the center must be
+// Keep the slate within the visible inner frame, not touching the wooden border
+const PLAYFIELD_MARGIN_X = 40; // was 60; allow slate a bit closer to the border
+// Small adjustment so the character visually touches the slate
+const CHARACTER_CONTACT_OFFSET = 6;
 
 // Characters collected on the slate
 let collectedCharacters = [];
@@ -163,7 +175,8 @@ let gameOverVisible = false;
 function updateOctopusChances() {
     const octopusChances = document.getElementById('octopusChances');
     if (octopusChances) {
-        octopusChances.textContent = misses;
+        // Show batch miss score in the octopus display
+        octopusChances.textContent = batchMisses;
     }
     updateChancesBar();
 }
@@ -171,7 +184,8 @@ function updateOctopusChances() {
 function updateChancesBar() {
     const slates = document.querySelectorAll('.chance-slate');
     slates.forEach((slate, idx) => {
-        // If this miss has occurred, replace the wooden slate with woodenslatecancel image
+        // For batch-miss mode: do not consume physical chances when batch is missed
+        // Keep slates intact for this specific case
         if (idx < misses) {
             slate.src = 'images/woodenslatecancel.png';
         } else {
@@ -224,7 +238,7 @@ playButton.addEventListener('pointerdown', (e) => { startGame(); });
 
 // Fallback: if the big Play button is visible, start game when user taps within its visual bounds
 function maybeStartFromGlobal(e) {
-    if (gameRunning || showGameScreen) return;
+    if (gameRunning || showGameScreen || congratsVisible) return;
     if (!playButton || getComputedStyle(playButton).display === 'none') return;
     const rect = playButton.getBoundingClientRect();
     const x = (e.touches && e.touches[0] ? e.touches[0].clientX : e.clientX);
@@ -429,13 +443,17 @@ function actuallyStartGame() {
     gameRunning = true;
     showGameScreen = false;
     score = 0;
+    anyWrongCollected = false; // Reset perfect-run tracker
     letters = [];
     collectedCharacters = [];
     targetDisplay.visible = false;
     misses = 0; // Reset misses to 0
+    batchMisses = 0; // Reset batch misses score
     parachutesSpawned = 0; // Reset parachute count
     canSpawnNewParachutes = true; // Allow spawning new parachutes
     batchTargetCollected = false; // Reset batch state
+    targetMissedThisBatch = false; // Reset target miss state
+    wrongCollectedThisBatch = false; // Reset wrong-in-batch state
     splashAnimations = []; // Reset splash animations
     wrongLetterAnimations = []; // Reset wrong letter animations
     rocks = []; // Reset rocks
@@ -549,6 +567,8 @@ function createLetter() {
     if (parachutesSpawned === 0) {
         // Starting a new batch of three parachutes
         batchTargetCollected = false;
+        targetMissedThisBatch = false;
+        wrongCollectedThisBatch = false;
         // First parachute - random letter
         const randomIndex1 = Math.floor(Math.random() * hindiLetters.length);
         letterObj = hindiLetters[randomIndex1];
@@ -636,6 +656,11 @@ function updateGame() {
     if (keys.ArrowRight && slate.x < canvas.width - slate.width) {
         slate.x += slate.speed;
     }
+    // Clamp slate within inner playfield (avoid touching the wooden border)
+    const minX = PLAYFIELD_MARGIN_X;
+    const maxX = canvas.width - PLAYFIELD_MARGIN_X - slate.width;
+    if (slate.x < minX) slate.x = minX;
+    if (slate.x > maxX) slate.x = maxX;
 
     // Update letters position and check for collisions
     for (let i = 0; i < letters.length; i++) {
@@ -688,6 +713,12 @@ function updateGame() {
                         console.log('4 letters collected! Score updated to:', score);
                         misses = Math.min(MAX_MISSES, misses + 1);
                         updateOctopusChances();
+                        // Check perfect run condition: reach 16 points with no wrong collections
+                        if (score >= 16 && !anyWrongCollected) {
+                            showCongratsBox();
+                            gameRunning = false;
+                            return;
+                        }
                         collectedCharacters = [];
                         if (misses >= MAX_MISSES) {
                             showGameOverBox();
@@ -703,6 +734,7 @@ function updateGame() {
                     i--;
                 } else {
                     // Wrong letter collected
+                    anyWrongCollected = true; // mark that a wrong letter was collected
                     if (wrongSound) {
                         try {
                             wrongSound.play();
@@ -714,7 +746,13 @@ function updateGame() {
                     // Create a falling rock from above the slate
                     createRock(slate.x + slate.width / 2, slate.y - 100);
 
+                    // Consume one chance for a wrong collection
                     misses = Math.min(MAX_MISSES, misses + 1);
+                    // Also increment the miss score shown near the octopus
+                    batchMisses += 1;
+                    // Mark that this batch already had a wrong collection so we don't also
+                    // add a batch miss when the batch ends
+                    wrongCollectedThisBatch = true;
                     updateOctopusChances();
                     // Lose progress: clear collected characters so player starts again
                     collectedCharacters = [];
@@ -747,6 +785,11 @@ function updateGame() {
             // Play drop sound
             playDropSound();
 
+            // If the target parachute was missed (not collected), mark it
+            if (letter.isTarget) {
+                targetMissedThisBatch = true;
+            }
+
             // Remove the letter (make it invisible)
             letters.splice(i, 1);
             i--;
@@ -761,18 +804,15 @@ function updateGame() {
         console.log('All parachutes dropped, spawning new batch of 3');
 
         // If player did not collect the target parachute during this batch,
-        // count it as a miss
-        if (!batchTargetCollected) {
-            misses = Math.min(MAX_MISSES, misses + 1);
+        // increase ONLY the batch miss score (do not consume a chance)
+        if ((targetMissedThisBatch || !batchTargetCollected) && !wrongCollectedThisBatch) {
+            batchMisses += 1;
             updateOctopusChances();
-            if (misses >= MAX_MISSES) {
-                showGameOverBox();
-                gameRunning = false;
-                return;
-            }
         }
         // Prepare for the next batch
         batchTargetCollected = false;
+        targetMissedThisBatch = false;
+        wrongCollectedThisBatch = false;
     }
 
     // Spawn new parachutes only if we can and haven't reached the limit
@@ -854,7 +894,7 @@ function drawGame() {
                 // Draw only the character image on the slate (no letter text)
                 ctx.drawImage(characterImage,
                     startX + (index * spacing) - charWidth / 2,
-                    slate.y - charHeight + slate.height,
+                    slate.y - charHeight + slate.height + CHARACTER_CONTACT_OFFSET,
                     charWidth, charHeight);
             } else {
                 // Fallback simple body without letter text
@@ -928,7 +968,7 @@ function drawGame() {
 
     // Draw instructions if game is not running
     if (!gameRunning) {
-        if (!showGameScreen && !gameOverVisible) {
+        if (!showGameScreen && !gameOverVisible && !congratsVisible) {
             // Initial state - show play button overlay
             // Draw a semi-transparent overlay for the play button area
             ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
@@ -958,11 +998,12 @@ function drawGame() {
             playButton.style.transition = 'all 0.3s ease';
             playButton.textContent = 'Start Game';
         } else {
-            // Game screen state - hide play button overlay and show small button inside canvas
+            // Game screen or end-state - hide play button overlay
             playButton.style.display = 'none';
-            
-            // Draw a small start button inside the canvas
-            drawSmallStartButton();
+            // Only draw small start button if we are in the showGameScreen state and not showing congrats
+            if (showGameScreen && !congratsVisible) {
+                drawSmallStartButton();
+            }
         }
     } else {
         // Hide the play button during game play
@@ -1555,6 +1596,22 @@ function hideGameOverBox() {
     gameOverVisible = false;
 }
 
+// Congrats modal helpers
+function showCongratsBox() {
+    const box = document.getElementById('congratsBox');
+    if (box) box.style.display = 'flex';
+    congratsVisible = true;
+    // Hide the big Start button if visible
+    if (playButton) {
+        playButton.style.display = 'none';
+    }
+}
+function hideCongratsBox() {
+    const box = document.getElementById('congratsBox');
+    if (box) box.style.display = 'none';
+    congratsVisible = false;
+}
+
 // Reset heading sound state when the page is shown (useful for back/forward navigation)
 function resetHeadingSoundState() {
     // Reset the flag but only if the page is being shown (not just refreshed)
@@ -1582,6 +1639,18 @@ window.addEventListener('DOMContentLoaded', () => {
             gameRunning = false;
             showGameScreen = false;
             startGame();
+        });
+    }
+
+    const homeBtn = document.getElementById('congratsHomeButton');
+    if (homeBtn) {
+        homeBtn.addEventListener('click', () => {
+            // Navigate back to home or reload if no referrer
+            if (document.referrer) {
+                window.location.href = document.referrer;
+            } else {
+                window.location.reload();
+            }
         });
     }
 });
